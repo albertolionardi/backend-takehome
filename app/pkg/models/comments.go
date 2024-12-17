@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/albertolionardi/app/pkg/config"
+	"app/pkg/config"
 
 	"github.com/jinzhu/gorm"
 )
