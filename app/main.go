@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/pkg/config"
 	"fmt"
 	"net/http"
 )
@@ -11,6 +12,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", handler)
-	fmt.Println("Server is running on http://localhost:8080")
+	config.Connect()
+	fmt.Println("Server is running on222 http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
+
 }
