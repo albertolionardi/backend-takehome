@@ -1,23 +1,31 @@
 package models
 
 import (
-	"app/pkg/config"
+	"log"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	ID           uint      `gorm:"primarykey"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email" gorm:"unique"`
-	PasswordHash string    `json:"-"`
+	PasswordHash string    `json:"password"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-func init() {
-	config.Connect()
-	db = config.GetDB()
+type RegisterUser struct {
+	Email        string `json:"email"`
+	PasswordHash string `json:"password"`
+}
+type LoginUser struct {
+	Email        string `json:"email"`
+	PasswordHash string `json:"password"`
+}
+
+func MigrateUser(db *gorm.DB) {
 	db.AutoMigrate(&User{})
+	log.Println("User Table Migration Completed...")
 }
