@@ -1,11 +1,10 @@
 package models
 
 import (
+	"log"
 	"time"
 
-	"app/pkg/config"
-
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Comment struct {
@@ -16,20 +15,7 @@ type Comment struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-func init() {
-	config.Connect()
-	db = config.GetDB()
+func MigrateComment(db *gorm.DB) {
 	db.AutoMigrate(&Comment{})
-}
-
-func DeleteComment(ID int64) Comment {
-	var comment Comment
-	db.Where("Comment=?", comment).Delete(comment)
-	return comment
-}
-
-func (c *Comment) CreateComment() *Comment {
-	db.NewRecord(c)
-	db.Create(&c)
-	return c
+	log.Println("Comment Table Migration Completed...")
 }
