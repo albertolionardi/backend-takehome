@@ -17,7 +17,7 @@ func BlogRoutes(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/posts/{id}", controllers.DeletePostById).Methods("DELETE")
 	router.HandleFunc("/posts/{id}", controllers.UpdatePost).Methods("PUT")
 
-	router.HandleFunc("/posts/{id}/comments", controllers.PostComment).Methods("POST")
+	router.HandleFunc("/posts/{id}/comments", controllers.CreateComment).Methods("POST")
 	router.HandleFunc("/posts/{id}/comments", controllers.ListAllComments).Methods("GET")
 
 }
