@@ -21,7 +21,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	routes.BlogRoutes(router, db)
 
-	fmt.Println("Server is running on222 http://localhost:8080")
+	fmt.Println("Server is running on http://localhost:8080")
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Fatal(err)
