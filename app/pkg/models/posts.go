@@ -8,12 +8,12 @@ import (
 )
 
 type Post struct {
-	ID        uint `gorm:"primarykey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	AuthorID  uint   `json:"author_id"`
+	ID        uint      `gorm:"primarykey"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	AuthorID  uint      `json:"author_id"`
 }
 
 type CreatePost struct {
