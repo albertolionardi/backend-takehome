@@ -108,7 +108,7 @@ func Test_CreatePost(t *testing.T) {
 	controller := routes.NewController(db)
 
 	mux := http.NewServeMux()
-	mux.Handle("/createPost", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.CreatePost)))
+	mux.Handle("/posts", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.CreatePost)))
 
 	newPost := models.CreatePost{
 		Title:   "Test Post",
@@ -118,7 +118,7 @@ func Test_CreatePost(t *testing.T) {
 	sessionID := helperLoginAndGetSessionID(t, db)
 
 	postRequestBody, _ := json.Marshal(newPost)
-	req := httptest.NewRequest("POST", "/createPost", bytes.NewBuffer(postRequestBody))
+	req := httptest.NewRequest("POST", "/posts", bytes.NewBuffer(postRequestBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 
@@ -133,4 +133,97 @@ func Test_CreatePost(t *testing.T) {
 		t.Fatalf("Failed to decode response body: %v", err)
 	}
 	assert.Equal(t, "Post successfully created", response["message"])
+}
+
+func Test_ListAllPosts(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := http.NewServeMux()
+	mux.Handle("/posts", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.GetPosts)))
+
+	sessionID := helperLoginAndGetSessionID(t, db)
+
+	req := httptest.NewRequest("GET", "/posts", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+
+	mux.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var posts []models.Post
+	err := json.NewDecoder(rr.Body).Decode(&posts)
+	if err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+	assert.NotEmpty(t, posts)
+}
+
+// STILL BROKEN
+func Test_GetPostById(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := http.NewServeMux()
+	mux.Handle("/posts/{id}", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.GetPostById)))
+
+	sessionID := helperLoginAndGetSessionID(t, db)
+	fmt.Printf("AA %s", sessionID)
+
+	req := httptest.NewRequest("GET", "/posts/", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+	fmt.Println("Response Body:", rr.Body.String())
+	mux.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var post models.Post
+	err := json.NewDecoder(rr.Body).Decode(&post)
+	if err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+	assert.Equal(t, 7, post.ID)
+	assert.Equal(t, "TEST POST UPDATED", post.Title)
+	assert.Equal(t, "TEST COMMENT UPDATED", post.Content)
+	assert.Equal(t, 4, post.AuthorID)
+}
+
+// STILL BROKEN
+func Test_UpdatePost(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := http.NewServeMux()
+	mux.Handle("/posts/{id}", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.UpdatePost)))
+
+	newPost := models.UpdatePost{
+		Title:   "Test Post Updated",
+		Content: "This is a test for updating post content",
+	}
+
+	sessionID := helperLoginAndGetSessionID(t, db)
+
+	postRequestBody, _ := json.Marshal(newPost)
+	req := httptest.NewRequest("PUT", "/posts/7", bytes.NewBuffer(postRequestBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var post models.Post
+	err := json.NewDecoder(rr.Body).Decode(&post)
+	if err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+	assert.Equal(t, "Test Post Updated", post.Title)
+	assert.Equal(t, "This is a test for updating post content", post.Content)
+
 }
