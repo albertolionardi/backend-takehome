@@ -57,6 +57,7 @@ func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 
@@ -112,6 +113,7 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "User login successfully",
@@ -141,6 +143,7 @@ func (c *controller) CreatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fail to create Post", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Post successfully created"})
 }
@@ -167,7 +170,7 @@ func (c *controller) GetPostById(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(post)
 }
@@ -182,6 +185,7 @@ func (c *controller) GetPosts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(posts)
 }
@@ -215,8 +219,10 @@ func (c *controller) DeletePostById(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Post successfully deleted"})
+
 }
 
 func (c *controller) UpdatePost(w http.ResponseWriter, r *http.Request) {
@@ -254,8 +260,10 @@ func (c *controller) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to update post", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Post successfully updated"})
+
 }
 func (c *controller) CreateComment(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -296,9 +304,9 @@ func (c *controller) CreateComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Comment successfully created"})
-
 }
 func (c *controller) ListAllComments(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -319,8 +327,11 @@ func (c *controller) ListAllComments(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch comments for the post", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	w.Header().Set("Content-type", "application/json")
 	if err := json.NewEncoder(w).Encode(comments); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
