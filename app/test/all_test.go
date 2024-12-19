@@ -60,9 +60,9 @@ func Test_Register(t *testing.T) {
 	db := setupTestDB()
 	controller := routes.NewController(db)
 	user := models.RegisterUser{
-		Name:         "PutAnyNameHere",
-		Email:        "PutAnyEmailhere",
-		PasswordHash: "PutAnyPasswordhere",
+		Name:         "Alberto",
+		Email:        "albertolionardi1@gmail.com",
+		PasswordHash: "testpassword",
 	}
 	body, _ := json.Marshal(user)
 	req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
@@ -172,7 +172,7 @@ func Test_GetPostById(t *testing.T) {
 
 	sessionID := helperLoginAndGetSessionID(t, db)
 
-	req := httptest.NewRequest("GET", "/posts/7", nil)
+	req := httptest.NewRequest("GET", "/posts/1", nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 
@@ -198,7 +198,7 @@ func Test_UpdatePost(t *testing.T) {
 	sessionID := helperLoginAndGetSessionID(t, db)
 
 	postRequestBody, _ := json.Marshal(newPost)
-	req := httptest.NewRequest("PUT", "/posts/7", bytes.NewBuffer(postRequestBody))
+	req := httptest.NewRequest("PUT", "/posts/1", bytes.NewBuffer(postRequestBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 
@@ -230,7 +230,7 @@ func Test_CreateComment(t *testing.T) {
 	sessionID := helperLoginAndGetSessionID(t, db)
 
 	postRequestBody, _ := json.Marshal(newComment)
-	req := httptest.NewRequest("POST", "/posts/7/comments", bytes.NewBuffer(postRequestBody))
+	req := httptest.NewRequest("POST", "/posts/1/comments", bytes.NewBuffer(postRequestBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 
@@ -256,7 +256,7 @@ func Test_ListAllComments(t *testing.T) {
 
 	sessionID := helperLoginAndGetSessionID(t, db)
 
-	req := httptest.NewRequest("GET", "/posts/7/comments", nil)
+	req := httptest.NewRequest("GET", "/posts/1/comments", nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 

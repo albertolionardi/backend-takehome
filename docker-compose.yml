@@ -20,6 +20,5 @@ services:
       MYSQL_DATABASE: appdb
     volumes:
       - "./schema.sql:/docker-entrypoint-initdb.d/schema.sql"
-      - "./.service-db:/var/lib/mysql"
     ports:
       - "3333:3306"
