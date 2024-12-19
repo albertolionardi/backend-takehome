@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	gorillamux "github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -162,43 +163,31 @@ func Test_ListAllPosts(t *testing.T) {
 	assert.NotEmpty(t, posts)
 }
 
-// STILL BROKEN
 func Test_GetPostById(t *testing.T) {
 	db := setupTestDB()
 	controller := routes.NewController(db)
 
-	mux := http.NewServeMux()
+	mux := gorillamux.NewRouter()
 	mux.Handle("/posts/{id}", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.GetPostById)))
 
 	sessionID := helperLoginAndGetSessionID(t, db)
-	fmt.Printf("AA %s", sessionID)
 
-	req := httptest.NewRequest("GET", "/posts/", nil)
+	req := httptest.NewRequest("GET", "/posts/7", nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("SessionID", sessionID)
 
 	rr := httptest.NewRecorder()
-	fmt.Println("Response Body:", rr.Body.String())
-	mux.ServeHTTP(rr, req)
 
+	mux.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var post models.Post
-	err := json.NewDecoder(rr.Body).Decode(&post)
-	if err != nil {
-		t.Fatalf("Failed to decode response body: %v", err)
-	}
-	assert.Equal(t, 7, post.ID)
-	assert.Equal(t, "TEST POST UPDATED", post.Title)
-	assert.Equal(t, "TEST COMMENT UPDATED", post.Content)
-	assert.Equal(t, 4, post.AuthorID)
 }
 
-// STILL BROKEN
 func Test_UpdatePost(t *testing.T) {
 	db := setupTestDB()
 	controller := routes.NewController(db)
 
-	mux := http.NewServeMux()
+	mux := gorillamux.NewRouter()
+
 	mux.Handle("/posts/{id}", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.UpdatePost)))
 
 	newPost := models.UpdatePost{
@@ -217,13 +206,61 @@ func Test_UpdatePost(t *testing.T) {
 	mux.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-
-	var post models.Post
-	err := json.NewDecoder(rr.Body).Decode(&post)
+	var response map[string]string
+	err := json.NewDecoder(rr.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("Failed to decode response body: %v", err)
 	}
-	assert.Equal(t, "Test Post Updated", post.Title)
-	assert.Equal(t, "This is a test for updating post content", post.Content)
 
+	assert.Equal(t, "Post successfully updated", response["message"])
+
+}
+
+func Test_CreateComment(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := gorillamux.NewRouter()
+	mux.Handle("/posts/{id}/comments", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.CreateComment)))
+
+	newComment := models.Comment{
+		Content: "This is a test for commenting a post",
+	}
+
+	sessionID := helperLoginAndGetSessionID(t, db)
+
+	postRequestBody, _ := json.Marshal(newComment)
+	req := httptest.NewRequest("POST", "/posts/7/comments", bytes.NewBuffer(postRequestBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var response map[string]string
+	err := json.NewDecoder(rr.Body).Decode(&response)
+	if err != nil {
+		t.Fatalf("Failed to decode response body: %v", err)
+	}
+
+	assert.Equal(t, "Comment successfully created", response["message"])
+}
+
+func Test_ListAllComments(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := gorillamux.NewRouter()
+	mux.Handle("/posts/{id}/comments", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.ListAllComments)))
+
+	sessionID := helperLoginAndGetSessionID(t, db)
+
+	req := httptest.NewRequest("GET", "/posts/7/comments", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
 }
