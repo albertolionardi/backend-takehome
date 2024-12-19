@@ -24,6 +24,7 @@ func NewController(db *gorm.DB) *controller {
 }
 func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 	var user models.RegisterUser
+
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
@@ -40,6 +41,7 @@ func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newUser := models.User{
+		Name:         user.Name,
 		Email:        user.Email,
 		PasswordHash: hashedPassword,
 		UpdatedAt:    time.Now(),
@@ -264,5 +266,89 @@ func (c *controller) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Post successfully updated"})
 }
-func (c *controller) PostComment(w http.ResponseWriter, r *http.Request)     {}
-func (c *controller) ListAllComments(w http.ResponseWriter, r *http.Request) {}
+func (c *controller) CreateComment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	postID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+	var comment models.Comment
+	sessionID := r.Header.Get("SessionID")
+	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		return
+	}
+	if sessionID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var session models.Session
+	if err := c.db.Table("sessions").Where("id=?", sessionID).First(&session).Error; err != nil {
+		http.Error(w, "Invalid Session ID", http.StatusUnauthorized)
+		return
+	}
+	if session.ID == "" || session.ExpiredAt.Before(time.Now()) {
+		http.Error(w, "Session ID has expired or Invalid", http.StatusUnauthorized)
+		return
+	}
+
+	var post models.Post
+	if err := c.db.First(&post, postID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+	var user models.User
+	if err := c.db.First(&user, session.UserID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+	newComment := models.Comment{
+		PostID:     post.ID,
+		AuthorName: user.Email,
+		Content:    comment.Content,
+		CreatedAt:  time.Now(),
+	}
+	if err := c.db.Create(&newComment).Error; err != nil {
+		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Comment successfully created"})
+
+}
+func (c *controller) ListAllComments(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	postID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	sessionID := r.Header.Get("SessionID")
+	if sessionID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var session models.Session
+	if err := c.db.Table("sessions").Where("id=?", sessionID).First(&session).Error; err != nil {
+		http.Error(w, "Invalid Session ID", http.StatusUnauthorized)
+		return
+	}
+	if session.ID == "" || session.ExpiredAt.Before(time.Now()) {
+		http.Error(w, "Session ID has expired or Invalid", http.StatusUnauthorized)
+		return
+	}
+
+	var comments []models.Comment
+	if err := c.db.Where("post_id = ?", postID).Find(&comments).Error; err != nil {
+		http.Error(w, "Failed to fetch comments for the post", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(comments); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
