@@ -264,3 +264,21 @@ func Test_ListAllComments(t *testing.T) {
 	mux.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
+
+func Test_WrongSessionID(t *testing.T) {
+	db := setupTestDB()
+	controller := routes.NewController(db)
+
+	mux := gorillamux.NewRouter()
+	mux.Handle("/posts/{id}/comments", middleware.SessionMiddleware(db)(http.HandlerFunc(controller.ListAllComments)))
+
+	sessionID := "wrongsessionID"
+
+	req := httptest.NewRequest("GET", "/posts/1/comments", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("SessionID", sessionID)
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusUnauthorized, rr.Code)
+}
